@@ -34,8 +34,16 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
-
+std::string generateAddress() {
+    static int hexAddress {0x0};
+    std::ostringstream strAddress;
+    strAddress << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << hexAddress;
+    hexAddress += 16; // Increment after to start from 0x00
+    return strAddress.str();
+}
 
 std::string hexdump(const std::vector<char> &data){
     // Read in first 16 bytes
@@ -43,9 +51,92 @@ std::string hexdump(const std::vector<char> &data){
     // convert first 16 bytes of hexadecimal into a <string>
     // convert hexadecimal with values between ASCII value 32 and 126 to their ASCII translation
     // Append memory address + 16 bytes + ASCII translations together
-};
+
+std::ostringstream hexout;
+
+for (size_t i = 0; i < data.size(); i += 16) {
+    // Print address
+    hexout << std::hex << std::nouppercase
+           << std::setw(8) << std::setfill('0') << i << ":";
+
+    // Print hex bytes
+    for (int j = 0; j < 16; ++j) {
+        hexout << " ";
+        if (i + j < data.size()) {
+            hexout << std::setw(2) << std::setfill('0')
+                   << static_cast<int>(static_cast<unsigned char>(data[i + j]));
+        } else {
+            hexout << "  ";
+        }
+    }
+
+    // Two spaces between hex and ASCII block
+    hexout << "  ";
+
+    // ASCII block
+    for (int j = 0; j < 16 && i + j < data.size(); ++j) {
+        char c = data[i + j];
+        hexout << ((c >= 32 && c <= 126) ? c : '.');
+    }
+
+    if (i + 16 < data.size()) {
+        hexout << "\n";  // only if it's not the last line
+    }
+}
+return hexout.str();
+}
 
 
 std::vector<char> dehex(const std::string &text){
+    std::vector<char> result;
+    std::istringstream iss(text);
+    std::string line;
 
-};
+    while (std::getline(iss, line)) {
+        // Skip the address at the beginning (first 10 characters: 8 digits + ": ")
+        if (line.size() < 10) continue;
+
+        size_t pos = 10;
+        int byteCount = 0;
+
+        while (byteCount < 16 && pos + 1 < line.size()) {
+            // Skip spaces
+            while (pos < line.size() && line[pos] == ' ')
+                ++pos;
+
+            // Stop if we're at the ASCII section (2 spaces before it)
+            if (pos + 1 >= line.size() || !std::isxdigit(line[pos]) || !std::isxdigit(line[pos + 1]))
+                break;
+
+            std::string byteStr = line.substr(pos, 2);
+            char byte = static_cast<char>(std::stoi(byteStr, nullptr, 16));
+            result.push_back(byte);
+
+            pos += 2;
+            ++byteCount;
+        }
+    }
+
+    return result;
+}
+
+int main(int argc, char const *argv[])
+{
+    const std::vector<char> testData1{	
+            0x1d, (char)0xc4, 0x15, 0x25, (char)0x91, (char)0xe6, 0x09, 0x59,
+            0x04, (char)0x99, 0x15, 0x29, 0x0a, 0x45, 0x21, 0x29,
+            0x26, (char)0x8e, 0x74, (char)0xa0, 0x1a, (char)0xbe, 0x75, 0x68,
+            0x06, (char)0xdd, 0x70, 0x33, (char)0xa4, 0x77, 0x7a, 0x5d,
+            (char)0xb1, (char)0xba, 0x22, (char)0xa7, (char)0xcf, (char)0xcc, (char)0xf7, (char)0xef,
+            (char)0xb1, (char)0xe3, 0x13, (char)0xed, (char)0xf1, (char)0x89, (char)0xad, (char)0xad,
+            (char)0xb8, 0x2a, 0x52, 0x32, 0x65, 0x79, 0x43, (char)0x99,
+            0x6f, (char)0xc8, (char)0xd3, (char)0x8e, (char)0xb2, 0x5f, 0x50, (char)0xc9,
+            0x08, 0x4a, 0x12, 0x25, 0x79, (char)0xc2, (char)0xdd, 0x31,
+            0x6b, (char)0xb8, 0x77, 0x74, 0x4b, 0x68, 0x4b, (char)0xd4,
+            (char)0xdb, 0x4e, (char)0x92, 0x09, (char)0xd5, 0x4c, (char)0x9f, 0x0b,
+            (char)0xfd, (char)0xa9, (char)0xd1, (char)0xd6, 0x13, (char)0xf5, (char)0xf8, (char)0x81
+			};
+    
+    std::cout << hexdump(testData1);
+    return 0;
+}
