@@ -8,9 +8,9 @@
       "command": "/usr/bin/g++",
       "args": [
         "-g",
-        "bouncing_balls.cpp",
+        "${file}",
         "-o",
-        "bball"
+        "${fileBasenameNoExtension}"
       ],
       "group": {
         "kind": "build",
