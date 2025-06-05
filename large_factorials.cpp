@@ -35,6 +35,7 @@ Algorithm:
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 std::string factorial(int factorial) {
     // Instantiate vector to hold numbers
@@ -61,3 +62,10 @@ std::string factorial(int factorial) {
    }
    return str;
 }
+
+int main(int argc, char const *argv[])
+{
+    std::cout << factorial(25) << '\n';
+    return 0;
+}
+
