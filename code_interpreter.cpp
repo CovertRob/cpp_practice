@@ -23,3 +23,71 @@
 // You may assume that the , command will never be invoked when the input stream is exhausted
 // Error-handling, e.g. unmatched square brackets and/or memory pointer going past the leftmost cell is not required in this Kata. If you see test cases that require you to perform error-handling then please open an Issue in the Discourse for this Kata (don't forget to state which programming language you are attempting this Kata in).
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <stack>
+
+std::string brainLuck(const std::string& code, const std::string& input) {
+    const int TAPE_SIZE = 30000;
+    std::vector<unsigned char> tape(TAPE_SIZE, 0);  // memory tape
+    std::string output;
+
+    int data_ptr = 0;
+    int code_ptr = 0;
+    int input_ptr = 0;
+
+    std::unordered_map<int, int> bracket_map;
+    std::stack<int> loop_stack;
+
+    // Precompute matching brackets
+    for (int i = 0; i < code.length(); ++i) {
+        if (code[i] == '[') {
+            loop_stack.push(i);
+        } else if (code[i] == ']') {
+            int open = loop_stack.top();
+            loop_stack.pop();
+            bracket_map[open] = i;
+            bracket_map[i] = open;
+        }
+    }
+
+    // Interpret the code
+    while (code_ptr < code.length()) {
+        char command = code[code_ptr];
+
+        switch (command) {
+            case '>':
+                ++data_ptr;
+                break;
+            case '<':
+                --data_ptr;
+                break;
+            case '+':
+                tape[data_ptr] = (tape[data_ptr] + 1) % 256;
+                break;
+            case '-':
+                tape[data_ptr] = (tape[data_ptr] - 1 + 256) % 256;
+                break;
+            case '.':
+                output += static_cast<char>(tape[data_ptr]);
+                break;
+            case ',':
+                tape[data_ptr] = static_cast<unsigned char>(input[input_ptr++]);
+                break;
+            case '[':
+                if (tape[data_ptr] == 0)
+                    code_ptr = bracket_map[code_ptr];
+                break;
+            case ']':
+                if (tape[data_ptr] != 0)
+                    code_ptr = bracket_map[code_ptr];
+                break;
+        }
+
+        ++code_ptr;
+    }
+
+    return output;
+}
